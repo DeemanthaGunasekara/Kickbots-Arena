@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Football Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #14141e;
+    --surface2: #1e1e2e;
+    --border: rgba(255,255,255,0.08);
+    --accent: #00e5ff;
+    --accent2: #ff3d71;
+    --green: #00e676;
+    --white: #f0f4ff;
+    --muted: rgba(255,255,255,0.4);
+    --red: #ff3d71;
+    --font-title: 'Bebas Neue', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--white); font-family: var(--font-body); }
+
+  /* ── Screens ── */
+  .screen { display: none; min-height: 100vh; padding: 2rem; flex-direction: column; align-items: center; justify-content: center; }
+  .screen.active { display: flex; }
+
+  /* ── Connect screen ── */
+  #connect-screen {
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,229,255,0.08) 0%, transparent 70%), var(--bg);
+  }
+  .logo { font-family: var(--font-title); font-size: clamp(3rem, 10vw, 5.5rem); letter-spacing: 4px; color: var(--white); line-height: 1; text-align: center; }
+  .logo span { color: var(--accent); }
+  .tagline { font-size: 0.85rem; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; margin-top: 0.5rem; text-align: center; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; width: 100%; max-width: 420px; margin-top: 2.5rem; }
+  .card h2 { font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; }
+  .field { margin-bottom: 1.25rem; }
+  .field label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 0.5rem; letter-spacing: 1px; text-transform: uppercase; }
+  .field input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; color: var(--white); font-family: var(--font-body); font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: rgba(255,255,255,0.2); }
+  .btn-primary { width: 100%; padding: 0.9rem; background: var(--accent); border: none; border-radius: 10px; color: #000; font-family: var(--font-body); font-weight: 700; font-size: 1rem; letter-spacing: 1px; cursor: pointer; transition: opacity 0.2s, transform 0.1s; margin-top: 0.5rem; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--muted); font-family: var(--font-body); font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); margin-right: 6px; }
+  .status-dot.connected { background: var(--green); }
+  #conn-status { font-size: 0.8rem; color: var(--muted); margin-top: 1rem; text-align: center; }
+
+  /* ── Setup screen ── */
+  #setup-screen { background: var(--bg); }
+  .setup-header { text-align: center; margin-bottom: 2rem; }
+  .setup-header h1 { font-family: var(--font-title); font-size: 3rem; letter-spacing: 3px; }
+  .setup-header p { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 560px; width: 100%; }
+  .player-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; }
+  .player-card.p1 { border-top: 3px solid var(--accent); }
+  .player-card.p2 { border-top: 3px solid var(--accent2); }
+  .player-card h3 { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  .time-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; max-width: 560px; width: 100%; margin-top: 0; }
+  .time-card h3 { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  .setup-actions { display: flex; flex-direction: column; gap: 0.75rem; max-width: 560px; width: 100%; margin-top: 1rem; }
+
+  /* ── Game screen ── */
+  #game-screen {
+    padding: 1.5rem;
+    background: radial-gradient(ellipse at 50% -20%, rgba(0,229,255,0.05) 0%, transparent 60%), var(--bg);
+    gap: 0;
+    justify-content: flex-start;
+  }
+  .scoreboard { width: 100%; max-width: 700px; margin: 0 auto; }
+  .game-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .game-title { font-family: var(--font-title); font-size: 1.8rem; letter-spacing: 4px; color: var(--white); }
+  #reset-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; padding: 0.45rem 1rem; border-radius: 8px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
+  #reset-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Timer */
+  .timer-ring-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; position: relative; }
+  .timer-ring { position: relative; width: 140px; height: 140px; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring circle.track { fill: none; stroke: var(--surface2); stroke-width: 6; }
+  .timer-ring circle.progress { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+  .timer-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .timer-number { font-family: var(--font-title); font-size: 2.8rem; line-height: 1; color: var(--white); letter-spacing: 2px; }
+  .timer-label { font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+  /* Player scores */
+  .scores-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+  .score-block { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem 1rem; text-align: center; transition: background 0.4s, border-color 0.4s; }
+  .score-block.p1 { border-top: 3px solid var(--accent); }
+  .score-block.p2 { border-top: 3px solid var(--accent2); }
+  .score-block.goal-flash { animation: goalFlash 0.6s ease; }
+  .score-block.scored { background: rgba(0,229,255,0.08); border-color: var(--accent); }
+  .score-block.p2.scored { background: rgba(255,61,113,0.08); border-color: var(--accent2); }
+  @keyframes goalFlash { 0%,100%{transform:scale(1)} 40%{transform:scale(1.08)} }
+  .score-name { font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score-num { font-family: var(--font-title); font-size: 5rem; line-height: 1; color: var(--white); }
+  .score-label { font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+  .vs-badge { font-family: var(--font-title); font-size: 1.6rem; color: var(--muted); letter-spacing: 2px; }
+
+  /* LED indicator strips */
+  .led-strips { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+  .led-bar { border-radius: 8px; height: 12px; transition: background 0.4s; position: relative; overflow: hidden; }
+  .led-bar::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); animation: shimmer 2s infinite; }
+  @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+  .led-bar.white { background: #e0e8ff; }
+  .led-bar.red { background: var(--red); }
+  .led-bar.off { background: var(--surface2); }
+  .led-bar.off::after { display: none; }
+  .led-bar.rainbow { background: linear-gradient(90deg, #ff0000,#ff8800,#ffee00,#00ee00,#0088ff,#8800ff,#ff0000); background-size: 200% 100%; animation: rainbowMove 1.5s linear infinite; }
+  @keyframes rainbowMove { 0%{background-position:0%} 100%{background-position:200%} }
+
+  /* Phase banner */
+  .phase-banner { text-align: center; margin-bottom: 1.5rem; min-height: 2.5rem; }
+  .phase-tag { display: inline-block; padding: 0.4rem 1.2rem; border-radius: 20px; font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
+  .phase-tag.idle    { background: var(--surface2); color: var(--muted); }
+  .phase-tag.rainbow { background: rgba(0,229,255,0.1); color: var(--accent); border: 1px solid rgba(0,229,255,0.3); }
+  .phase-tag.playing { background: rgba(0,230,118,0.1); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+  .phase-tag.goal    { background: rgba(255,61,113,0.1); color: var(--accent2); border: 1px solid rgba(255,61,113,0.3); animation: pulseBorder 0.5s ease infinite alternate; }
+  @keyframes pulseBorder { from{box-shadow:0 0 0 0 rgba(255,61,113,0.3)} to{box-shadow:0 0 12px 4px rgba(255,61,113,0.3)} }
+  .phase-tag.finished{ background: rgba(255,200,0,0.1); color: #ffd740; border: 1px solid rgba(255,200,0,0.3); }
+
+  /* Goal celebration overlay */
+  #goal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; flex-direction: column; }
+  #goal-overlay.active { display: flex; }
+  .goal-text { font-family: var(--font-title); font-size: clamp(4rem,15vw,8rem); letter-spacing: 6px; animation: goalPop 0.5s ease; }
+  .goal-text.p1 { color: var(--accent); }
+  .goal-text.p2 { color: var(--accent2); }
+  @keyframes goalPop { 0%{transform:scale(0.5) rotate(-5deg);opacity:0} 80%{transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0)} }
+  .goal-scorer { font-size: 1.1rem; color: var(--white); opacity: 0.8; margin-top: 0.5rem; letter-spacing: 2px; text-transform: uppercase; }
+  .goal-countdown { font-family: var(--font-title); font-size: 3rem; color: var(--muted); margin-top: 1rem; }
+
+  /* Winner screen */
+  #winner-screen { background: radial-gradient(ellipse at 50% 30%, rgba(255,215,0,0.12) 0%, transparent 65%), var(--bg); }
+  .trophy { font-size: 5rem; margin-bottom: 1rem; }
+  .winner-label { font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .winner-name { font-family: var(--font-title); font-size: clamp(3rem,12vw,6rem); letter-spacing: 4px; color: #ffd740; }
+  .final-scores { display: flex; gap: 2rem; margin: 2rem 0; }
+  .final-score-item { text-align: center; }
+  .final-score-item .name { font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .final-score-item .num { font-family: var(--font-title); font-size: 3.5rem; color: var(--white); }
+  .final-score-item.winner .num { color: #ffd740; }
+
+  /* Responsive */
+  @media (max-width: 520px) {
+    .setup-grid { grid-template-columns: 1fr; }
+    .score-num { font-size: 3.5rem; }
+    .scores-row { gap: 0.5rem; }
+    .score-block { padding: 1rem 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ CONNECT SCREEN ══════════════════════════════════════ -->
+<div id="connect-screen" class="screen active">
+  <div class="logo">ARENA<span>⚽</span></div>
+  <div class="tagline">Football Score System</div>
+  <div class="card">
+    <h2>Connect to ESP32</h2>
+    <div class="field">
+      <label>ESP32 IP Address</label>
+      <input type="text" id="esp-ip" placeholder="192.168.1.xxx" value=""/>
+    </div>
+    <button class="btn-primary" onclick="connectToESP()">Connect</button>
+    <div id="conn-status"><span class="status-dot" id="dot"></span><span id="conn-text">Not connected</span></div>
+  </div>
+</div>
+
+<!-- ══ SETUP SCREEN ════════════════════════════════════════ -->
+<div id="setup-screen" class="screen">
+  <div class="setup-header">
+    <h1>GAME SETUP</h1>
+    <p>Enter player names and match duration</p>
+  </div>
+  <div class="setup-grid">
+    <div class="player-card p1">
+      <h3>Player 1</h3>
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="p1-name" placeholder="e.g. Messi" maxlength="16"/>
+      </div>
+    </div>
+    <div class="player-card p2">
+      <h3>Player 2</h3>
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="p2-name" placeholder="e.g. Ronaldo" maxlength="16"/>
+      </div>
+    </div>
+  </div>
+  <div class="time-card">
+    <h3>Match Duration</h3>
+    <div class="field">
+      <label>Time (seconds)</label>
+      <input type="number" id="game-time" placeholder="e.g. 120" min="10" max="3600" value="120"/>
+    </div>
+  </div>
+  <div class="setup-actions">
+    <button class="btn-primary" onclick="startGame()" style="max-width:560px;">⚽ START MATCH</button>
+    <button class="btn-secondary" onclick="goBack()" style="max-width:560px; width:100%;">← Back</button>
+  </div>
+</div>
+
+<!-- ══ GAME SCREEN ══════════════════════════════════════════ -->
+<div id="game-screen" class="screen">
+  <div class="scoreboard">
+    <div class="game-header">
+      <div class="game-title">⚽ ARENA</div>
+      <button id="reset-btn" onclick="resetGame()">End Match</button>
+    </div>
+
+    <div class="phase-banner">
+      <span class="phase-tag idle" id="phase-tag">Waiting</span>
+    </div>
+
+    <div class="timer-ring-wrap">
+      <div class="timer-ring">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="track"    cx="70" cy="70" r="62"/>
+          <circle class="progress" cx="70" cy="70" r="62"
+            stroke-dasharray="389.6" stroke-dashoffset="0" id="timer-arc"/>
+        </svg>
+        <div class="timer-center">
+          <div class="timer-number" id="timer-display">--</div>
+          <div class="timer-label">seconds</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scores-row">
+      <div class="score-block p1" id="block-p1">
+        <div class="score-name" id="name-p1">Player 1</div>
+        <div class="score-num" id="score-p1">0</div>
+        <div class="score-label">Goals</div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="score-block p2" id="block-p2">
+        <div class="score-name" id="name-p2">Player 2</div>
+        <div class="score-num" id="score-p2">0</div>
+        <div class="score-label">Goals</div>
+      </div>
+    </div>
+
+    <div class="led-strips">
+      <div class="led-bar off" id="led1"></div>
+      <div class="led-bar off" id="led2"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GOAL OVERLAY ════════════════════════════════════════ -->
+<div id="goal-overlay">
+  <div class="goal-text" id="goal-text">GOAL!</div>
+  <div class="goal-scorer" id="goal-scorer"></div>
+  <div class="goal-countdown" id="goal-cd"></div>
+</div>
+
+<!-- ══ WINNER SCREEN ══════════════════════════════════════ -->
+<div id="winner-screen" class="screen">
+  <div class="trophy">🏆</div>
+  <div class="winner-label">Winner</div>
+  <div class="winner-name" id="winner-name">—</div>
+  <div class="final-scores">
+    <div class="final-score-item" id="fs1">
+      <div class="name" id="fs-name1">P1</div>
+      <div class="num" id="fs-score1">0</div>
+    </div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:rgba(255,255,255,0.2);align-self:center;">VS</div>
+    <div class="final-score-item" id="fs2">
+      <div class="name" id="fs-name2">P2</div>
+      <div class="num" id="fs-score2">0</div>
+    </div>
+  </div>
+  <button class="btn-primary" style="max-width:300px;" onclick="playAgain()">Play Again</button>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────
+let ws = null;
+let espIP = '';
+let totalTime = 120;
+let goalOverlayTimer = null;
+let goalCdInterval  = null;
+
+const PHASES = { IDLE:0, RAINBOW:1, PLAYING:2, GOAL:3, RESUME:4, FINISHED:5 };
+
+// ── Screens ───────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Connect ───────────────────────────────────────────────
+function connectToESP() {
+  const ip = document.getElementById('esp-ip').value.trim();
+  if (!ip) { alert('Enter the ESP32 IP address.'); return; }
+  espIP = ip;
+  setConnStatus('Connecting…', false);
+
+  if (ws) { ws.close(); ws = null; }
+
+  ws = new WebSocket(`ws://${espIP}/ws`);
+
+  ws.onopen = () => {
+    setConnStatus('Connected', true);
+    showScreen('setup-screen');
+  };
+  ws.onclose = () => setConnStatus('Disconnected', false);
+  ws.onerror = () => setConnStatus('Error — check IP', false);
+  ws.onmessage = (evt) => handleMessage(JSON.parse(evt.data));
+}
+
+function setConnStatus(msg, ok) {
+  document.getElementById('conn-text').textContent = msg;
+  document.getElementById('dot').className = 'status-dot' + (ok ? ' connected' : '');
+}
+
+function goBack() { showScreen('connect-screen'); }
+
+// ── Start ─────────────────────────────────────────────────
+function startGame() {
+  const p1 = document.getElementById('p1-name').value.trim() || 'Player 1';
+  const p2 = document.getElementById('p2-name').value.trim() || 'Player 2';
+  const t  = parseInt(document.getElementById('game-time').value) || 120;
+  totalTime = t;
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) { alert('Not connected to ESP32.'); return; }
+
+  ws.send(JSON.stringify({ cmd:'start', p1, p2, time: t }));
+  showScreen('game-screen');
+  document.getElementById('timer-display').textContent = formatTime(t);
+}
+
+function resetGame() {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ cmd:'reset' }));
+  clearGoalOverlay();
+  showScreen('setup-screen');
+}
+
+function playAgain() { showScreen('setup-screen'); }
+
+// ── Message handler ───────────────────────────────────────
+function handleMessage(data) {
+  const phase = data.phase;
+  const p1Score = data.player1Score;
+  const p2Score = data.player2Score;
+  const timeLeft = data.timeLeft;
+  const lastGoal = data.lastGoalPlayer;
+
+  // Names
+  document.getElementById('name-p1').textContent = data.player1Name;
+  document.getElementById('name-p2').textContent = data.player2Name;
+
+  // Scores
+  document.getElementById('score-p1').textContent = p1Score;
+  document.getElementById('score-p2').textContent = p2Score;
+
+  // Timer
+  if (phase === PHASES.PLAYING || phase === PHASES.GOAL || phase === PHASES.RESUME) {
+    updateTimer(timeLeft, totalTime);
+  } else if (phase === PHASES.RAINBOW) {
+    document.getElementById('timer-display').textContent = formatTime(totalTime);
+    setTimerArc(1);
+  }
+
+  // Phase UI
+  updatePhaseUI(phase, lastGoal, data.player1Name, data.player2Name);
+
+  // Winner screen
+  if (phase === PHASES.FINISHED) {
+    setTimeout(() => showWinner(data), 1500);
+  }
+}
+
+function updatePhaseUI(phase, lastGoal, p1n, p2n) {
+  const tag  = document.getElementById('phase-tag');
+  const led1 = document.getElementById('led1');
+  const led2 = document.getElementById('led2');
+  const b1   = document.getElementById('block-p1');
+  const b2   = document.getElementById('block-p2');
+
+  // LED bars
+  led1.className = 'led-bar';
+  led2.className = 'led-bar';
+
+  if (phase === PHASES.RAINBOW) {
+    led1.classList.add('rainbow');
+    led2.classList.add('rainbow');
+    tag.className  = 'phase-tag rainbow';
+    tag.textContent = '🌈 Warm-Up';
+  } else if (phase === PHASES.PLAYING || phase === PHASES.RESUME) {
+    led1.classList.add('white');
+    led2.classList.add('white');
+    tag.className  = 'phase-tag playing';
+    tag.textContent = '▶ In Play';
+    clearGoalOverlay();
+  } else if (phase === PHASES.GOAL) {
+    if (lastGoal === 1) {
+      led1.classList.add('red');
+      led2.classList.add('off');
+      tag.className  = 'phase-tag goal';
+      tag.textContent = '⚽ GOAL — ' + p1n;
+      showGoalOverlay(1, p1n);
+      b1.classList.add('goal-flash', 'scored');
+      setTimeout(() => b1.classList.remove('goal-flash'), 700);
+    } else if (lastGoal === 2) {
+      led1.classList.add('off');
+      led2.classList.add('red');
+      tag.className  = 'phase-tag goal';
+      tag.textContent = '⚽ GOAL — ' + p2n;
+      showGoalOverlay(2, p2n);
+      b2.classList.add('goal-flash', 'scored');
+      setTimeout(() => b2.classList.remove('goal-flash'), 700);
+    }
+  } else if (phase === PHASES.FINISHED) {
+    led1.classList.add('off');
+    led2.classList.add('off');
+    tag.className  = 'phase-tag finished';
+    tag.textContent = '🏁 Final Whistle';
+    clearGoalOverlay();
+  } else {
+    led1.classList.add('off');
+    led2.classList.add('off');
+    tag.className  = 'phase-tag idle';
+    tag.textContent = 'Waiting';
+  }
+}
+
+// ── Timer ─────────────────────────────────────────────────
+function updateTimer(left, total) {
+  document.getElementById('timer-display').textContent = formatTime(left);
+  setTimerArc(left / total);
+  const arc = document.getElementById('timer-arc');
+  if (left <= 10) {
+    arc.style.stroke = '#ff3d71';
+  } else if (left <= 30) {
+    arc.style.stroke = '#ffd740';
+  } else {
+    arc.style.stroke = '#00e5ff';
+  }
+}
+
+function setTimerArc(fraction) {
+  const circ = 2 * Math.PI * 62; // r=62
+  const offset = circ * (1 - Math.max(0, Math.min(1, fraction)));
+  document.getElementById('timer-arc').style.strokeDashoffset = offset;
+}
+
+function formatTime(secs) {
+  if (secs >= 60) {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m + ':' + String(s).padStart(2,'0');
+  }
+  return String(secs);
+}
+
+// ── Goal overlay ──────────────────────────────────────────
+function showGoalOverlay(player, name) {
+  clearGoalOverlay();
+  const overlay = document.getElementById('goal-overlay');
+  const gt = document.getElementById('goal-text');
+  gt.textContent = 'GOAL!';
+  gt.className = 'goal-text p' + player;
+  document.getElementById('goal-scorer').textContent = name;
+  overlay.classList.add('active');
+
+  let cd = 4;
+  document.getElementById('goal-cd').textContent = cd;
+  goalCdInterval = setInterval(() => {
+    cd--;
+    document.getElementById('goal-cd').textContent = cd > 0 ? cd : '';
+    if (cd <= 0) clearGoalOverlay();
+  }, 1000);
+}
+
+function clearGoalOverlay() {
+  if (goalCdInterval) { clearInterval(goalCdInterval); goalCdInterval = null; }
+  document.getElementById('goal-overlay').classList.remove('active');
+  document.getElementById('block-p1').classList.remove('scored');
+  document.getElementById('block-p2').classList.remove('scored');
+}
+
+// ── Winner ────────────────────────────────────────────────
+function showWinner(data) {
+  const p1 = data.player1Score;
+  const p2 = data.player2Score;
+  const p1n = data.player1Name;
+  const p2n = data.player2Name;
+  let winnerName;
+  if (p1 > p2)       { winnerName = p1n; }
+  else if (p2 > p1)  { winnerName = p2n; }
+  else               { winnerName = 'DRAW!'; }
+
+  document.getElementById('winner-name').textContent  = winnerName;
+  document.getElementById('fs-name1').textContent     = p1n;
+  document.getElementById('fs-score1').textContent    = p1;
+  document.getElementById('fs-name2').textContent     = p2n;
+  document.getElementById('fs-score2').textContent    = p2;
+
+  document.getElementById('fs1').classList.toggle('winner', p1 >= p2 && p1 !== p2);
+  document.getElementById('fs2').classList.toggle('winner', p2 > p1);
+
+  showScreen('winner-screen');
+}
+</script>
+</body>
+</html>

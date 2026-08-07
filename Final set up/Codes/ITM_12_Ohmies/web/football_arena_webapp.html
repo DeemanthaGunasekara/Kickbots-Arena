@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--g:linear-gradient(135deg,#0f0f0f 0%,#1a1a2e 50%,#16213e 100%);--accent:#00ff88;--red:#ff3b5c;--gold:#ffd700;--card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08)}
+  body{background:var(--g);min-height:100vh;font-family:'Inter',sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:4px;background:linear-gradient(90deg,#00ff88,#00ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.25rem;text-align:center}
+  .subtitle{font-size:.75rem;letter-spacing:3px;color:rgba(255,255,255,.35);text-transform:uppercase;margin-bottom:2rem;text-align:center}
+  #setup{width:100%;max-width:520px;display:flex;flex-direction:column;gap:1.25rem}
+  .field-group{display:flex;flex-direction:column;gap:.4rem}
+  label{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45)}
+  input[type=text],input[type=number]{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:#fff;font-size:.95rem;font-family:inherit;outline:none;transition:border-color .2s;width:100%}
+  input:focus{border-color:var(--accent)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .player-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;gap:.75rem}
+  .dot{width:10px;height:10px;border-radius:50%;margin-bottom:.25rem}
+  .dot-green{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .dot-red{background:var(--red);box-shadow:0 0 8px var(--red)}
+  .btn-start{background:linear-gradient(135deg,var(--accent),#00ccff);color:#000;border:none;border-radius:10px;padding:1rem;font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:transform .15s,opacity .2s;margin-top:.5rem}
+  .btn-start:hover{transform:scale(1.02)}
+  .btn-start:active{transform:scale(0.98)}
+  .btn-start:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .ip-row{display:flex;gap:.75rem;align-items:flex-end}
+  .ip-row input{flex:1}
+  .btn-connect{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.75rem 1.25rem;color:#fff;font-size:.8rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:border-color .2s}
+  .btn-connect:hover{border-color:var(--accent)}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;margin-right:6px;vertical-align:middle;transition:background .3s}
+  .status-dot.ok{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .status-dot.err{background:var(--red);box-shadow:0 0 6px var(--red)}
+  .status-label{font-size:.72rem;letter-spacing:1px;color:rgba(255,255,255,.4);display:flex;align-items:center}
+  #game{width:100%;max-width:700px;display:none;flex-direction:column;gap:1.5rem}
+  .timer-ring{text-align:center}
+  .timer-num{font-family:'Bebas Neue',sans-serif;font-size:5rem;letter-spacing:4px;line-height:1}
+  .timer-label{font-size:.65rem;letter-spacing:3px;color:rgba(255,255,255,.35);text-transform:uppercase;margin-top:.25rem}
+  .scoreboard{display:grid;grid-template-columns:1fr auto 1fr;gap:.5rem;align-items:center}
+  .player-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem 1rem;display:flex;flex-direction:column;align-items:center;gap:.5rem;transition:all .3s;min-height:160px;justify-content:center}
+  .player-panel.scored{border-color:var(--red)!important;background:rgba(255,59,92,.08)!important}
+  .player-panel.winner{border-color:var(--gold);background:rgba(255,215,0,.06)}
+  .pname{font-size:.8rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .pscore{font-family:'Bebas Neue',sans-serif;font-size:4.5rem;line-height:1;transition:transform .2s}
+  .pscore.bump{transform:scale(1.25)}
+  .pled{width:100%;height:6px;border-radius:3px;background:#333;overflow:hidden}
+  .pled-fill{height:100%;border-radius:3px;transition:background .4s}
+  .vs{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:rgba(255,255,255,.2);text-align:center}
+  .led-strips{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+  .strip-wrap{border-radius:8px;overflow:hidden;height:12px;border:1px solid var(--border)}
+  .strip-inner{height:100%;width:100%;transition:background .4s}
+  .strip-label{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:.35rem}
+  .goal-banner{text-align:center;padding:.75rem;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;background:rgba(255,59,92,.12);border:1px solid rgba(255,59,92,.3);color:var(--red);display:none}
+  .goal-banner.show{display:block;animation:goalPulse 1s ease infinite}
+  @keyframes goalPulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .gameover-panel{text-align:center;padding:2rem;background:var(--card);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;gap:.75rem;align-items:center}
+  .gameover-panel.show{display:flex}
+  .go-title{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:4px;color:var(--gold)}
+  .go-winner{font-size:1.1rem;font-weight:600}
+  .btn-reset{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.75rem 2rem;color:#fff;font-size:.85rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:border-color .2s;margin-top:.5rem}
+  .btn-reset:hover{border-color:var(--accent)}
+  .err-msg{color:var(--red);font-size:.75rem;letter-spacing:1px;text-align:center;min-height:1rem}
+</style>
+</head>
+<body>
+<h1>Football Arena</h1>
+<p class="subtitle">Powered by ESP32</p>
+<div id="setup">
+  <div class="field-group">
+    <label>ESP32 IP Address</label>
+    <div class="ip-row">
+      <input type="text" id="ipInput" placeholder="192.168.1.100">
+      <button class="btn-connect" onclick="testConnection()">Connect</button>
+    </div>
+    <div class="status-label"><span class="status-dot" id="connDot"></span><span id="connText">Not connected</span></div>
+  </div>
+  <div class="row">
+    <div class="player-card"><div class="dot dot-green"></div><div class="field-group"><label>Player 1 Name</label><input type="text" id="p1name" placeholder="Alice" maxlength="16"></div></div>
+    <div class="player-card"><div class="dot dot-red"></div><div class="field-group"><label>Player 2 Name</label><input type="text" id="p2name" placeholder="Bob" maxlength="16"></div></div>
+  </div>
+  <div class="field-group"><label>Game Duration (seconds)</label><input type="number" id="gametime" value="120" min="10" max="600"></div>
+  <p class="err-msg" id="errMsg"></p>
+  <button class="btn-start" id="btnStart" onclick="startGame()">Start Game</button>
+</div>
+<div id="game">
+  <div class="timer-ring"><div class="timer-num" id="timerNum">0:00</div><div class="timer-label">Time Remaining</div></div>
+  <div class="goal-banner" id="goalBanner">GOAL!</div>
+  <div class="scoreboard">
+    <div class="player-panel" id="panel1"><div class="pname" id="gname1">Player 1</div><div class="pscore" id="gscore1">0</div><div class="pled"><div class="pled-fill" id="led1bar" style="width:6px;background:var(--accent)"></div></div></div>
+    <div class="vs">VS</div>
+    <div class="player-panel" id="panel2"><div class="pname" id="gname2">Player 2</div><div class="pscore" id="gscore2">0</div><div class="pled"><div class="pled-fill" id="led2bar" style="width:6px;background:var(--red)"></div></div></div>
+  </div>
+  <div>
+    <div class="strip-label">LED Strips</div>
+    <div class="led-strips">
+      <div><div class="strip-label" id="slabel1">Player 1</div><div class="strip-wrap"><div class="strip-inner" id="strip1vis"></div></div></div>
+      <div><div class="strip-label" id="slabel2">Player 2</div><div class="strip-wrap"><div class="strip-inner" id="strip2vis"></div></div></div>
+    </div>
+  </div>
+  <div class="gameover-panel" id="gameoverPanel">
+    <div class="go-title">Full Time!</div>
+    <div class="go-winner" id="goWinner"></div>
+    <button class="btn-reset" onclick="resetGame()">New Game</button>
+  </div>
+</div>
+<script>
+let esp32IP='',pollTimer=null,lastScore1=0,lastScore2=0,inRainbow=false,rainbowInterval=null,gameRunning=false,rainbowHue=0;
+function getBase(){return`http://${esp32IP}`}
+async function testConnection(){
+  const ip=document.getElementById('ipInput').value.trim();
+  if(!ip){showErr('Enter IP address');return}
+  esp32IP=ip;
+  const dot=document.getElementById('connDot'),txt=document.getElementById('connText');
+  txt.textContent='Connecting...';dot.className='status-dot';
+  try{const r=await fetch(`http://${ip}/api/state`,{signal:AbortSignal.timeout(3000)});
+    if(r.ok){dot.className='status-dot ok';txt.textContent=`Connected to ${ip}`}else throw new Error()
+  }catch{dot.className='status-dot err';txt.textContent='Connection failed - check IP';esp32IP=''}
+}
+function showErr(msg){document.getElementById('errMsg').textContent=msg;setTimeout(()=>document.getElementById('errMsg').textContent='',3000)}
+async function startGame(){
+  const ip=document.getElementById('ipInput').value.trim();
+  if(!ip){showErr('Connect to ESP32 first');return}
+  esp32IP=ip;
+  const n1=document.getElementById('p1name').value.trim()||'Player 1';
+  const n2=document.getElementById('p2name').value.trim()||'Player 2';
+  const t=parseInt(document.getElementById('gametime').value)||120;
+  document.getElementById('btnStart').disabled=true;
+  try{
+    const r=await fetch(`${getBase()}/api/start`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name1:n1,name2:n2,time:t})});
+    if(!r.ok)throw new Error();
+    lastScore1=0;lastScore2=0;
+    ['gname1','gname2'].forEach((id,i)=>document.getElementById(id).textContent=[n1,n2][i]);
+    ['slabel1','slabel2'].forEach((id,i)=>document.getElementById(id).textContent=[n1,n2][i]);
+    ['gscore1','gscore2'].forEach(id=>document.getElementById(id).textContent='0');
+    document.getElementById('gameoverPanel').classList.remove('show');
+    document.getElementById('goalBanner').classList.remove('show');
+    document.getElementById('setup').style.display='none';
+    document.getElementById('game').style.display='flex';
+    gameRunning=true;
+    startRainbow();
+    setTimeout(()=>{stopRainbow();setStripsWhite()},3000);
+    startPolling();
+  }catch{showErr('Failed to start - check connection');document.getElementById('btnStart').disabled=false}
+}
+function startPolling(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(poll,500)}
+async function poll(){
+  if(!gameRunning)return;
+  try{const r=await fetch(`${getBase()}/api/state`,{signal:AbortSignal.timeout(2000)});updateUI(await r.json())}catch{}
+}
+function updateUI(d){
+  const m=Math.floor(d.timeLeft/60),s=d.timeLeft%60;
+  document.getElementById('timerNum').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  if(d.score1!==lastScore1){document.getElementById('gscore1').textContent=d.score1;bumpAnim('gscore1');lastScore1=d.score1}
+  if(d.score2!==lastScore2){document.getElementById('gscore2').textContent=d.score2;bumpAnim('gscore2');lastScore2=d.score2}
+  const total=Math.max(d.score1+d.score2,1);
+  document.getElementById('led1bar').style.width=`${Math.max(8,(d.score1/total)*100)}%`;
+  document.getElementById('led2bar').style.width=`${Math.max(8,(d.score2/total)*100)}%`;
+  const p1=document.getElementById('panel1'),p2=document.getElementById('panel2'),banner=document.getElementById('goalBanner');
+  if(d.paused&&d.winner>0){
+    banner.textContent=`GOAL! ${d.winner==1?d.name1:d.name2} scored!`;
+    banner.classList.add('show');
+    if(d.winner==1){p1.classList.add('scored');p2.classList.remove('scored');setStrip1('red');setStrip2('off')}
+    else{p2.classList.add('scored');p1.classList.remove('scored');setStrip2('red');setStrip1('off')}
+  }else if(!d.paused&&d.active){
+    banner.classList.remove('show');p1.classList.remove('scored');p2.classList.remove('scored');
+    if(!inRainbow){setStrip1('white');setStrip2('white')}
+  }
+  if(!d.active&&gameRunning){
+    gameRunning=false;stopRainbow();clearInterval(pollTimer);
+    banner.classList.remove('show');p1.classList.remove('scored');p2.classList.remove('scored');
+    const go=document.getElementById('gameoverPanel'),gw=document.getElementById('goWinner');
+    if(d.score1>d.score2){gw.textContent=`${d.name1} wins! ${d.score1} - ${d.score2}`;setStrip1('green');setStrip2('red');p1.classList.add('winner')}
+    else if(d.score2>d.score1){gw.textContent=`${d.name2} wins! ${d.score2} - ${d.score1}`;setStrip2('green');setStrip1('red');p2.classList.add('winner')}
+    else{gw.textContent=`It's a draw! ${d.score1} - ${d.score2}`;setStrip1('yellow');setStrip2('yellow')}
+    go.classList.add('show');
+  }
+}
+function bumpAnim(id){const el=document.getElementById(id);el.classList.add('bump');setTimeout(()=>el.classList.remove('bump'),300)}
+function startRainbow(){
+  inRainbow=true;if(rainbowInterval)clearInterval(rainbowInterval);
+  rainbowInterval=setInterval(()=>{
+    rainbowHue=(rainbowHue+3)%360;
+    document.getElementById('strip1vis').style.background=`hsl(${rainbowHue},100%,50%)`;
+    document.getElementById('strip2vis').style.background=`hsl(${(rainbowHue+120)%360},100%,50%)`;
+  },40);
+}
+function stopRainbow(){inRainbow=false;if(rainbowInterval){clearInterval(rainbowInterval);rainbowInterval=null}}
+function setStripsWhite(){document.getElementById('strip1vis').style.background='#ffffff';document.getElementById('strip2vis').style.background='#ffffff'}
+function setStrip1(c){document.getElementById('strip1vis').style.background=colorMap(c)}
+function setStrip2(c){document.getElementById('strip2vis').style.background=colorMap(c)}
+function colorMap(c){return{white:'#ffffff',red:'#ff3b5c',off:'#111111',green:'#00ff88',yellow:'#ffd700'}[c]||'#111'}
+async function resetGame(){
+  try{await fetch(`${getBase()}/api/stop`,{method:'POST'})}catch{}
+  gameRunning=false;stopRainbow();if(pollTimer)clearInterval(pollTimer);
+  ['panel1','panel2'].forEach(id=>document.getElementById(id).classList.remove('winner','scored'));
+  document.getElementById('strip1vis').style.background='#111';
+  document.getElementById('strip2vis').style.background='#111';
+  document.getElementById('game').style.display='none';
+  document.getElementById('setup').style.display='flex';
+  document.getElementById('btnStart').disabled=false;
+}
+</script>
+</body>
+</html>
