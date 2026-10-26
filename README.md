@@ -49,17 +49,6 @@ The project integrates hardware and software to demonstrate real-time control, w
 4. **Web Interface:** The ESP32 hosts a website accessible over a local Wi-Fi network for arena monitoring and control.
 5. **Goalkeeper Mechanism:** A stepper motor-based system provides goalkeeper movement.
 
-## 📂 Project Structure
-
-```text
-KickBots/
-├── Mic Code/       # Microcontroller firmware
-├── Mob Code/       # Mobile application source code
-├── Web Code/       # Web interface source code
-└── README.md       # Project documentation
-```
-
-*Update the folder names above to match the actual structure of your repository.*
 
 ## 🎯 Project Objectives
 
