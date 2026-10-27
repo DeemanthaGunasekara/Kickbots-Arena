@@ -57,12 +57,12 @@ The project integrates hardware and software to demonstrate real-time control, w
 - Automate goal detection and arena feedback.
 - Integrate embedded hardware with a web-based interface.
 - Demonstrate practical applications of robotics, IoT, and embedded systems.
+- Real-time score tracking and Led changes.
 
 ## 🚀 Future Improvements
 
 - Improve wireless communication range and reliability.
 - Enhance robot movement and control responsiveness.
-- Add real-time score tracking and match statistics.
 - Improve the web interface with additional monitoring features.
 - Optimize battery life and power management.
 
